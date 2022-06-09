@@ -1,3 +1,0 @@
-start,goal,range,global_reached_goal,global_cost,local_reached_goal,local_cost
-"(101, 101)","(50, 50)",15,True,2271.8757113258453,True,384.4423350286257
-"(101, 101)","(79, 20)",15,True,4865.872833234486,True,687.8540098642351
