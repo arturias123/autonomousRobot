@@ -9,14 +9,13 @@ from collections import OrderedDict
 
 
 class Robot(Robot_base):
-    def __init__(self, start, vision_range=20, robot_type=RobotType.circle, robot_radius=0.2, learning_rate=0.01,
-                 reward_decay=0.9, e_greedy=0.9, total_reward=0):
+    def __init__(self, start, vision_range=20, robot_type=RobotType.circle, robot_radius=0.2, total_reward=0):
         super().__init__(vision_range, robot_type, robot_radius)
 
         self.total_reward = total_reward
         self.reward_table = OrderedDict()  # Dictionary to hold rewards
         self.reward_table = {}
-        self.final = OrderedDict()  # final q table
+        self.final = OrderedDict()  # final reward table
         self.f = True  # First time write to dictionary
         self.coordinate = tuple(start)  # hold current coordinate of robot
         self.next_coordinate = tuple(start)  # hold next coordinate where robot moves to
@@ -36,11 +35,6 @@ class Robot(Robot_base):
 
         # visibility Graph which contains information of visited places
         self.visibility_graph = Graph()
-        self.lr = learning_rate
-        # Value of gamma
-        self.gamma = reward_decay
-        # Value of epsilon
-        self.epsilon = e_greedy
 
     def is_no_way_to_goal(self, noway):
         self.no_way_to_goal = noway
@@ -153,7 +147,12 @@ class Robot(Robot_base):
             for pt in pts:
                 if tuple(pt) in self.reward_table:
                     if self.reward_table[tuple(pt)] == 0:
-                        self.local_active_open_rank_pts[pt_idx, 2] = 0 # make it have rank zero
+                        self.local_active_open_rank_pts[pt_idx, 2] = 0  # make it have rank zero
+                # else:
+                #     for key in self.reward_table.keys():
+                #         if self.reward_table[key] == 0:
+                #             if point_dist(pt, list(key)) < self.vision_range / 2: # If near 0 rewarded point.
+                #                 self.local_active_open_rank_pts[pt_idx, 2] = 0
                 pt_idx += 1
 
     ''' check whether local open_points are active '''

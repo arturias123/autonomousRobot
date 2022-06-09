@@ -15,13 +15,22 @@ from Robot_ranking import Ranker
 from Robot import Robot
 from Robot_base import RobotType
 import argparse
+import csv
 
 current_reward = 0
 def robot_main(start, goal, map_name, world_name, num_iter, robot_vision, robot_type, robot_radius, total_reward):
 
     robot = Robot(start, robot_vision, robot_type, robot_radius, total_reward)
-    ranker = Ranker(alpha=0.6, beta= 0.4)
+    ranker = Ranker(alpha=0.9, beta=0.1)
+    table = True
 
+    if table:
+        with open ("data_%s_%s_%s_%s_%s_%s.csv" % (map_name[5:len(map_name) - 4], start[0], start[1], goal[0], goal[1], robot_vision), 'r') as f:
+            reader = csv.reader(f)
+            next(reader)
+            for line in reader:
+                key = tuple([float(line[0][1:]), float(line[1][0:len(line[1]) - 1])])
+                robot.reward_table[key] = int(line[2])
 
     # declare potter
     plotter = Plot_robot(title="Path Planning for Autonomous Robot: {0}".format(map_name))
@@ -114,10 +123,14 @@ def robot_main(start, goal, map_name, world_name, num_iter, robot_vision, robot_
             if robot.f:
                 robot.final = robot.reward_table.copy()
                 robot.f = False
-            else:
-                if len(robot.reward_table) < len(robot.final):
-                    robot.final = robot.reward_table.copy()
             robot.update_reward_table()
+
+            with open("data_%s_%s_%s_%s_%s_%s.csv" % (map_name[5:len(map_name) - 4], start[0], start[1], goal[0], goal[1], robot_vision), 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['state', 'reward'])
+                for key, value in robot.final.items():
+                    if value == 0:
+                        f.write("%s, %s\n" % (str(key), robot.final[key]))
             # for i, (key, value) in enumerate(robot.final.items()):
             #     if value == 0:
             #         print(i, key, value)
