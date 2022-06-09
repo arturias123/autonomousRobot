@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     range_step = 5
     range_max = 1
-    range_begin = 20
+    range_begin = 15
     for s in start_list:
         start = s
         for g in goal_list:
