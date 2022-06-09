@@ -21,7 +21,7 @@ class Robot_base:
         self.obstacle_cost_gain = 1.0
         self.robot_stuck_flag_cons = 0.001                  # constant to prevent robot stucked
         self.robot_type = robot_type
-        self.vision_range = 15                   # the range of input vision
+        self.vision_range = vision_range                    # the range of input vision
         
         # if robot_type == RobotType.circle
         # Also used to check if goal is reached in both types

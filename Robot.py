@@ -3,21 +3,12 @@ from Robot_lib import *
 from Robot_sight_lib import inside_local_true_sight, inside_global_true_sight
 from Robot_base import Robot_base, RobotType
 from Program_config import *
-from Graph import Graph
-import pandas as pd
-from collections import OrderedDict
 
 
 class Robot(Robot_base):
-    def __init__(self, start, vision_range=20, robot_type=RobotType.circle, robot_radius=0.2, learning_rate=0.01,
-                 reward_decay=0.9, e_greedy=0.9, total_reward=0):
+    def __init__(self, start, vision_range=20, robot_type=RobotType.circle, robot_radius=0.2):
         super().__init__(vision_range, robot_type, robot_radius)
 
-        self.total_reward = total_reward
-        self.reward_table = OrderedDict()  # Dictionary to hold rewards
-        self.reward_table = {}
-        self.final = OrderedDict()  # final q table
-        self.f = True  # First time write to dictionary
         self.coordinate = tuple(start)  # hold current coordinate of robot
         self.next_coordinate = tuple(start)  # hold next coordinate where robot moves to
         self.reach_goal = False  # True if robot reach goal
@@ -34,13 +25,11 @@ class Robot(Robot_base):
         self.visited_path = []  # path that robot visited
         self.visited_path_direction = []  # status of visited subpath, true = forward, false = backward
 
+        self.vision_range_list = []  # hold the list of vision range robot visited
+
         # visibility Graph which contains information of visited places
-        self.visibility_graph = Graph()
-        self.lr = learning_rate
-        # Value of gamma
-        self.gamma = reward_decay
-        # Value of epsilon
-        self.epsilon = e_greedy
+        self.visibility_graph = graph_intiailze()
+        self.prev_vision_range = vision_range
 
     def is_no_way_to_goal(self, noway):
         self.no_way_to_goal = noway
@@ -54,8 +43,13 @@ class Robot(Robot_base):
     def update_coordinate(self, point):
         self.coordinate = point
 
-    def expand_traversal_sights(self, closed_sights, open_sights):
-        self.traversal_sights.append([self.coordinate, closed_sights, open_sights])
+    def expand_vision_range_list(self, vision_range1):
+        if len(self.vision_range_list) > 2:
+            self.prev_vision_range = self.vision_range_list[-2]
+        self.vision_range_list.append(vision_range1)
+
+    def expand_traversal_sights(self, closed_sights, open_sights, vision_range1):
+        self.traversal_sights.append([self.coordinate, closed_sights, open_sights, vision_range1])
 
     def expand_visited_path(self, path):
         '''
@@ -125,7 +119,7 @@ class Robot(Robot_base):
 
     ''' check whether local open_points are active '''
 
-    def get_local_active_open_points(self):
+    def get_local_active_open_points(self, vision_range1):
 
         # get local active point for local points
         self.local_active_open_pts = []
@@ -147,55 +141,33 @@ class Robot(Robot_base):
 
             # store local open points and its ranking 
             self.local_active_open_rank_pts = np.concatenate((self.local_active_open_pts, ranks_new), axis=1)
-            pts = self.local_active_open_rank_pts[:, 0:2]
-            pt_idx = 0
-            # Look for existed (zero rewarded) points in reward table from local active open rank points
-            for pt in pts:
-                if tuple(pt) in self.reward_table:
-                    if self.reward_table[tuple(pt)] == 0:
-                        self.local_active_open_rank_pts[pt_idx, 2] = 0 # make it have rank zero
-                pt_idx += 1
 
     ''' check whether local open_points are active '''
 
-    def get_local_active_open_ranking_points(self, open_sights, ranker, goal):
+    def get_local_active_open_ranking_points(self, open_sights, ranker, goal, vision_range1):
         # get all local points from open sights
         self.get_local_open_points(open_sights)
 
         # get only active open point
-        self.get_local_active_open_points()
+        self.get_local_active_open_points(vision_range1)
 
         # ranking and store it to local active open ranking points
         self.ranking_active_open_point(ranker=ranker, goal=goal)
 
-    ''' pick next point, where its ranking is highest, in given list '''
+    ''' pick next point, where its ranking is heighest, in given list '''
 
     def pick_next_point(self, open_points_list, goal):
         next_point = None
         next_pt_idx = -1
-        reward = 0
 
         if self.saw_goal or self.reach_goal:
             next_point = goal
-            reward = 1
-
         elif len(open_points_list) > 0:
-            if self.f:
-                ranks = open_points_list[:, 2]
-                next_pt_idx = np.argmax(ranks)
-                next_point = open_points_list[next_pt_idx, 0:2]
+            ranks = open_points_list[:, 2]
+            next_pt_idx = np.argmax(ranks)
+            next_point = open_points_list[next_pt_idx, 0:2]
 
-            incoming_dist = point_dist(self.coordinate, goal) - point_dist(next_point, goal)
-            if incoming_dist < - self.vision_range / 2:
-                # reward = -1 + -1 * round(abs(incoming_dist) / self.vision_range, 2)
-                reward = -1 + -1 * round(point_dist(self.coordinate, next_point) / self.vision_range, 2)
-            else:
-                reward = -1
-
-            print("vision range: ", self.vision_range)
-            print("Distance travel to next point: ", point_dist(self.coordinate, next_point))
-        # print('open points: ', open_points_list)
-        return next_point, next_pt_idx, reward
+        return next_point, next_pt_idx
 
     ''' remove active point form active list '''
 
@@ -204,24 +176,11 @@ class Robot(Robot_base):
 
     ''' calcualte traveled path length '''
 
-    def update_reward_table(self):
-        idx = []
-        # Find the point that has been punished
-        for i, (key, value) in enumerate(self.final.items()):
-            if value < -1.8:
-                idx.append(i - (-value // 1))
-        # Find the point that started the wrong way
-        for i, (key, value) in enumerate(self.final.items()):
-            if i in idx:
-                self.final[key] = 0 # Reward it with zero value
-        for key, value in self.final.items():
-            if value == 0:
-                print(key, value)
-
     def calculate_traveled_path_cost(self):
         cost = 0.0
         for path in self.visited_path:
-            cost += path_cost(path)
+            for i in range(len(path) - 1):
+                cost += point_dist(path[i], path[i + 1])
         return cost
 
     ''' add local active and its ranking to global active points set '''

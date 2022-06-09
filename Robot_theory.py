@@ -63,7 +63,7 @@ def robot_main(start, goal, map_name, world_name, num_iter, robot_vision, robot_
 
         if not robot.saw_goal and not robot.reach_goal:
             # get local active point and its ranking
-            robot.get_local_active_open_ranking_points(open_sights, ranker, goal)
+            robot.get_local_active_open_ranking_points(open_sights, ranker, goal, robot_vision)
 
             # stack local active open point to global set
             robot.expand_global_open_ranking_points(robot.local_active_open_rank_pts)

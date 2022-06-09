@@ -135,6 +135,24 @@ def get_angle_info(center, ptA, ptB):
         ve = ptB  # end
     return angle, vs, ve
 
+def get_angle_only_info(center, ptA, ptB):
+    '''
+    return angle, start edge , end edge (in anti-clockwise)
+    '''
+
+    vector_a = np.subtract(ptA, center)
+    vector_b = np.subtract(ptB, center)
+
+    angle = signed_angle(vector_a, vector_b)
+
+    if angle < 0:
+        vs = ptB  # start
+        ve = ptA  # end
+    else:
+        vs = ptA  # start
+        ve = ptB  # end
+    return angle
+
 
 def inside_angle_area(point, center, ref_boundaries):
     ''' 
@@ -349,6 +367,8 @@ def get_middle_direction(center, radius, points):
         return pt_is[0]
     else:
         return pt_is[1]
+
+
 
 
 def get_index_true(array_idx_status):

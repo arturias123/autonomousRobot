@@ -1,5 +1,8 @@
+import math
+
 import numpy as np
 from Robot_lib import *
+from collections import defaultdict
 
 def motion(current_position, next_pt):
     '''
@@ -18,6 +21,93 @@ def all_remaining_point_same_side(a, b, c, obstacle_list):
     if sum(sameside1[0]) == len(sameside1[0]) or sum(sameside2[0]) == len(sameside2[0]):
         return True
     return False
+
+# Function to build the graph
+def build_graph(edges):
+    edges
+    graph = defaultdict(list)
+
+    # Loop to iterate over every
+    # edge of the graph
+    for edge in edges:
+        a, b = edge[0], edge[1]
+
+        # Creating the graph
+        # as adjacency list
+        graph[a].append(b)
+        graph[b].append(a)
+    return graph
+
+
+# Function to initialize a graph
+def graph_intiailze():
+    return defaultdict(list)
+
+
+# Function to add local active point to graph
+def graph_add_lOpenPts(graph, center, lActive_OpenPts):
+    if len(lActive_OpenPts) > 0:
+        graph_insert(graph, center, lActive_OpenPts)
+
+
+# Function to insert edges into graph
+def graph_insert(graph, pnode, leafs):
+    # print ("__pnode:", pnode)
+    # print ("__leafs:", leafs)
+    if len(leafs) > 0:
+        for leaf in leafs:
+            graph[tuple(pnode)].append(tuple(leaf))
+            graph[tuple(leaf)].append(tuple(pnode))
+
+        # Function to find the shortest
+
+
+# path between two nodes of a graph
+def BFS_skeleton_path(graph, start, goal):
+    #print("BFS_skeleton_path: Current {0}, Next {1}".format(start, goal))
+    explored = []
+
+    # Queue for traversing the
+    # graph in the BFS
+    queue = [[start]]
+
+    # If the desired node is
+    # reached
+    if start == goal:
+        print("Same Node")
+        return start
+
+    # Loop to traverse the graph
+    # with the help of the queue
+    while queue:
+        path = queue.pop(0)
+        node = path[-1]
+
+        # Condition to check if the
+        # current node is not visited
+        if node not in explored:
+            neighbours = graph[node]
+            # print ("_NODE:", node)
+            # Loop to iterate over the
+            # neighbours of the node
+            for neighbour in neighbours:
+                # print ("___neighbour:", neighbour)
+                new_path = list(path)
+                new_path.append(neighbour)
+                queue.append(new_path)
+
+                # Condition to check if the
+                # neighbour node is the goal
+                if neighbour == goal:
+                    #print("BFS_skeleton_path = ", new_path)
+                    return new_path
+            explored.append(node)
+
+            # Condition when the nodes
+    # are not connected
+    print("So sorry, but a connecting path doesn't exist :(")
+    return []
+
 
 def approximately_shortest_path(skeleton_path, traversal_sight, robot_vision):
     if len(skeleton_path) <= 2:
@@ -98,16 +188,26 @@ def get_critical_ls(skeleton_path, traversal_sight, robot_vision):
 
         # if there is no local across line, create a fake across ls
         if len(local_ls) == 0:
+            #print("DEBUG 180 do  1   =============================================")
+            # print("ANGLE of 3 pt:", math.degrees(get_angle_only_info(c_pt, pre_pt, post_pt)))
+            # if get_angle_only_info(c_pt, pre_pt, post_pt) == math.pi or get_angle_only_info(c_pt, pre_pt, post_pt) == -math.pi:
             if belong_line(pre_pt, [c_pt, post_pt]) == True:
                 r_angle = math.pi/2
                 v1 = rotate_vector_center(c_pt, post_pt, -r_angle)
                 v2 = rotate_vector_center(c_pt, pre_pt, -r_angle)
+                # pt_is = intersection(c_pt[0], c_pt[1], safe_radius, [post_pt_1, pre_pt_1])
+                # if inside_line_segment(c_pt, [pt_is[0], c_pt]):
+                #     midpt = get_disjoint_ls(c_pt, pt_is[0], safe_radius)
+                # else:
+                #     midpt = get_disjoint_ls(c_pt, pt_is[1], safe_radius)
 
                 local_ls.append([0, v1, v2])
+                # midpt = intersection(c_pt[0], c_pt[1], robot_vision/2, (c_pt, ))                                      ##################
             else:
                 midpt = get_middle_direction(c_pt, robot_vision, (pre_pt, post_pt))
                 midpt = get_disjoint_ls(c_pt, midpt, safe_radius)
                 local_ls.append([0, midpt, c_pt])
+
 
         critical_ls.extend(local_ls)
         #print("critical_ls ", critical_ls)
@@ -190,7 +290,7 @@ def approximately_sp_ls(critical_ls, spt, gpt):
 def is_inside_active_arc(local_open_pts, robot_vision, center, goal):
     # find 2 intersection points (arc_limA, arc_limB) between 2 circles (center, robot_vision)
     #  and (goal, robot_to_goal)
-    
+
     robot_to_goal = point_dist(center, goal)
     if robot_to_goal > robot_vision:
         arc_limA, arc_limB = get_intersections_2circles(center, robot_vision, goal, robot_to_goal)
@@ -201,9 +301,3 @@ def is_inside_active_arc(local_open_pts, robot_vision, center, goal):
     else:
         return None, None
 
-    ''' calculate path cost'''
-def path_cost(path):
-    cost = 0.0
-    for i in range(len(path)-1):
-        cost += point_dist(path[i], path[i+1])
-    return cost

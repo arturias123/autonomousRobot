@@ -29,6 +29,19 @@ class Ranker:
             
         return score
 
+    def score_function_with(self, angle=math.pi / 2, distance1=1, distance2 = 1, alpha=0.9, beta=0.1):
+        # ranking = alpha/(distance**2) + beta/abs(angle**2)
+
+        angle = angle / math.pi  # norm angle
+        distance1 = distance1 / 100  # norm distance
+        distance2 = distance2 / 100  # norm distance
+        # print ("Ranking score: angle {0}, distance {1}".format(angle, distance) )
+        score = float('inf')
+        if not math.isclose(angle, 0.0) and not math.isclose(distance1, 0.0):
+            score = alpha / (distance1) + beta / abs(angle) + 0.05 / (distance2)
+
+        return score
+
     ''' ranking a given point  by its angle (from center to point and to goal) and its distance (to goal)'''
     def rank(self, center, point, goal):
 
@@ -38,4 +51,15 @@ class Ranker:
         sa = signed_angle(vector_cg, vector_pg)
         dist = point_dist(goal, point)
         rank_score = self.score_function(sa, dist, self.alpha, self.beta)
+        return [rank_score]
+
+    def rank_with(self, center, point, goal, start):
+
+        vector_cg = np.subtract(center, goal)
+        vector_pg = np.subtract(center, point)
+
+        sa = signed_angle(vector_cg, vector_pg)
+        dist1 = point_dist(goal, point)
+        dist2 = point_dist(start, point)
+        rank_score = self.score_function_with(sa, dist1, dist2, self.alpha, self.beta)
         return [rank_score]

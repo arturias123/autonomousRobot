@@ -6,6 +6,22 @@ import numpy as np
 
 rel_tol = 0.0000001
 
+def adjust_vision_range(angle, len_closed):
+    """
+    Adjust the vision range for the robot when moving in a high density place
+    code 0: don't change the robot vision
+    code 1: increase the robot vision
+    code 2: decrease the robot vision
+    """
+    code = 0
+    if angle < 120 and len_closed > 3:
+        code = 2
+    elif angle >= 120 and angle <= 240 and len_closed <=3 and len_closed >= 2  :
+        code = 0
+    elif angle > 240 and len_closed < 2 :
+        code = 1
+    return code
+
 
 def divide_sight_R_C_R_C(center, A, B, C, D):  # line [A,C], [B, D], B inside AC but D outside
     # divide sight into 2 different parts [R_C0_R]
@@ -373,7 +389,7 @@ def get_closed_sights(Robot, obstacles):
 
 
 def inside_global_true_sight(pt, radius, traversal_path):
-    result = [inside_local_true_sight(pt, x, radius, tsight) for x, tsight, _ in traversal_path]
+    result = [inside_local_true_sight(pt, x, radius, tsight) for x, tsight, _, _  in traversal_path]
     ret_result = np.sum(result) > 0
     # print ("inside global sight result: ", result, ", return :", ret_result)
     return ret_result

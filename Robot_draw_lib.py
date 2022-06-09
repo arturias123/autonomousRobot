@@ -7,11 +7,13 @@ import matplotlib.image as mpimg
 from matplotlib.collections import PatchCollection
 
 from Plot_base_lib import Plot_base
-from Graph import Graph
 
+ 
 class Plot_robot(Plot_base):
     def __init__(self, size=(6,6), title="Path Planning Problem for an Autonomous Robot"):
         super().__init__(size, title)
+
+        # self.current_vision_range = Robot.second_last_vision_range(self)  # display the 2nd last current vision range
 
     def sight(self, center, pair, cl="g", alpha=transparent, linestyle=":"):
         triangle = [center, pair[0], pair[1]]
@@ -63,8 +65,7 @@ class Plot_robot(Plot_base):
     def show_configuration_space(self, config_space: list):
         self.polygons(config_space, ls = ls_cspace)
         
-    def visibility_graph(self, graph: Graph , ls_vg):
-        visibility_graph = graph.graph
+    def visibility_graph(self, visibility_graph, ls_vg):
         for pnode in visibility_graph:
             for verteces in visibility_graph[pnode]:
                 self.line_segment([pnode, verteces], ls_vg)
@@ -82,7 +83,9 @@ class Plot_robot(Plot_base):
             local_center = local[0]  # center of robot at local
             local_closed_sights = local[1]  # closed sight at local
             local_open_sights = local[2]  # open sight at local
-            self.vision(local_center, vision_range, local_closed_sights, local_open_sights)
+            local_vision_range = local[3]  # vision range at local
+
+            self.vision(local_center, local_vision_range, local_closed_sights, local_open_sights)
 
     def show_animation(self, Robot: Robot, world_name, iter_count, obstacles:Obstacles , goal, 
                     closed_sights, open_sights, skeleton_path, asp , critical_ls, next_point):
@@ -118,7 +121,6 @@ class Plot_robot(Plot_base):
         if show_local_openpt and len(Robot.local_open_pts) > 0:
             self.points(Robot.local_open_pts, ls_lopt)
         
-        # ranking points
         if show_active_openpt and len(Robot.global_active_open_rank_pts) > 0:
             self.point_colors(Robot.global_active_open_rank_pts, Robot.global_active_open_rank_pts[:,2])
         
