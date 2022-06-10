@@ -17,8 +17,7 @@ Firstly, the 'table' variable in 'Robot_main.py' should be set as 'False', becau
 
 Example: 
 ```
-python Robot_main.py -n 5 -m _MuchMoreFun.csv -sx 5 -sy 5 -gx 35.0 -gy 50.0
 python Robot_main.py -n 0 -m _map.csv -sx 5 -sy 5 -gx 35.0 -gy 50.0
-python Robot_main.py -n 0 -w _world.png -sx 5 -sy 10 -gx 250 -gy 310 -r 40
+python Robot_main.py -n 0 -m _map_new3.csv -sx 60 -sy 10 -gx 70.0 -gy 100.0
 ```
 When the robot finishes its run, the calculated zero-rewarded points will be logged in the console and will be save into a CSV file that is named after the map, the start and goal coordinates, and the vision range. To use that file, set the 'table' variable to 'True' and run the command again.
