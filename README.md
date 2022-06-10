@@ -1,4 +1,4 @@
-# AutonomousRobot
+# Rewarding the Autonomous Robot
 This project simulates our path-planning for an autonomous robot that tries to find a way to reach a goal (target)
 in certainly environment differently each time it runs.
 Firstly, the 'table' variable in 'Robot_main.py' should be set as 'False', because there is currently no data in the reward table. We chose to save only the inefficient points. In future development, developers should also save the route of each run in order to easily make comparisions.
